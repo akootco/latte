@@ -1,0 +1,3 @@
+rootProject.name = 'latte'
+include(':bluefox')
+project(':bluefox').projectDir = new File('../bluefox')
