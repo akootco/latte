@@ -1,14 +1,17 @@
 package co.akoot.plugins.latte
 
-import org.bukkit.plugin.java.JavaPlugin
+import co.akoot.plugins.bluefox.api.FoxPlugin
+import co.akoot.plugins.latte.commands.LatteCommand
 
-class Latte : JavaPlugin() {
+class Latte : FoxPlugin("latte") {
 
-    override fun onEnable() {
-        logger.info("Tell me about it!")
+    override fun load() {
     }
 
-    override fun onDisable() {
-        // Plugin shutdown logic
+    override fun unload() {
+    }
+
+    override fun registerCommands() {
+        registerCommand(LatteCommand(this))
     }
 }
