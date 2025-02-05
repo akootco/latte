@@ -5,13 +5,11 @@ import co.akoot.plugins.bluefox.api.FoxCommand
 import co.akoot.plugins.bluefox.api.FoxConfig
 import co.akoot.plugins.bluefox.api.FoxPlugin
 import co.akoot.plugins.bluefox.api.XYZ
-import co.akoot.plugins.bluefox.util.ColorUtil
-import co.akoot.plugins.bluefox.util.Txt
+import co.akoot.plugins.bluefox.util.Text
 import org.bukkit.Location
 import org.bukkit.World
 import org.bukkit.World.Environment
 import org.bukkit.WorldCreator
-import org.bukkit.WorldType
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import java.io.File
@@ -85,8 +83,8 @@ class LatteCommand(plugin: FoxPlugin): FoxCommand(plugin, "latte") {
         val worlds = getWorldFolders()
         val loaded = worlds.filter { it.value }.map { it.key }
         val unloaded = worlds.filterNot { it.value }.map { it.key }
-        val message = Txt.list(unloaded, itemColor = "player", postfix = "\n") + Txt.list(loaded)
-        return Result.success(message.c)
+        val message = Text.list(unloaded, itemColor = "player", postfix = "\n") + Text.list(loaded)
+        return Result.success(message.component)
     }
 
     private fun load(name: String): Result<Boolean> {
