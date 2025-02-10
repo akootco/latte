@@ -66,11 +66,11 @@ class LatteListener(private val latte: Latte) : Listener {
 
     @EventHandler
     fun onLogin(event: PlayerLoginEvent) {
-        latte.runLater(2) {
+        latte.runLater((latte.tps / 10).toLong()) {
             val player = event.player
             val world = player.world
             latte.loadDataFile(player, world)
-            latte.runLater(2) {
+            latte.runLater((latte.tps / 10).toLong()) {
                 latte.update(player)
                 latte.setDefaultGamemode(player, world)
             }

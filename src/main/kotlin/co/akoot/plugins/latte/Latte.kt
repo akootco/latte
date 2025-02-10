@@ -5,6 +5,7 @@ import co.akoot.plugins.bluefox.api.FoxCommand.Result
 import co.akoot.plugins.bluefox.api.FoxConfig
 import co.akoot.plugins.bluefox.api.FoxPlugin
 import co.akoot.plugins.bluefox.api.XYZ
+import co.akoot.plugins.bluefox.extensions.getPDC
 import co.akoot.plugins.bluefox.util.Text
 import co.akoot.plugins.bluefox.util.Text.Companion.accented
 import co.akoot.plugins.bluefox.util.Text.Companion.copy
@@ -44,9 +45,18 @@ class Latte : FoxPlugin("latte") {
         fun World.isRelated(world: World): Boolean {
             return getParentWorldName() == world.name || world.getParentWorldName() == name
         }
+
+        lateinit var instance: Latte
+
+        fun key(key: String): NamespacedKey {
+            return instance.key(key)
+        }
     }
 
+    val tps get() = server.tps.getOrElse(0) { 20.0 }
+
     override fun load() {
+        instance = this
         for ((world, loaded) in getWorldFolders()) {
             val config = getWorldConfig(world) ?: continue
             if (config.getBoolean("autoload") == true) {
@@ -135,7 +145,7 @@ class Latte : FoxPlugin("latte") {
 
     fun loadDataFile(offlinePlayer: OfflinePlayer, fromWorld: World, toWorld: World, op: () -> Unit = {}) {
         if (fromWorld.isRelated(toWorld)) {
-            runLater(2) {
+            runLater((tps / 10).toLong()) {
                 op()
             }
             return
@@ -150,12 +160,12 @@ class Latte : FoxPlugin("latte") {
         } else {
             offlinePlayer.player?.let { setupNewDataFile(it) }
             currentDataFile.copyTo(toWorldDataFile, true)
-            runLater(2) {
+            runLater((tps / 10).toLong()) {
                 op()
             }
             return
         }
-        runLater(2) {
+        runLater((tps / 10).toLong()) {
             offlinePlayer.player?.apply {
                 loadData()
                 updateInventory()
