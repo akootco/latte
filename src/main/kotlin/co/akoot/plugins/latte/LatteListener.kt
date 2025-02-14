@@ -1,85 +1,165 @@
 package co.akoot.plugins.latte
 
-import co.akoot.plugins.latte.Latte.Companion.isRelated
+import co.akoot.plugins.bluefox.util.async
+import co.akoot.plugins.bluefox.util.sync
+import co.akoot.plugins.latte.extensions.*
+import com.destroystokyo.paper.event.player.PlayerAdvancementCriterionGrantEvent
+import org.bukkit.Location
 import org.bukkit.World
+import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityTeleportEvent
-import org.bukkit.event.player.PlayerLoginEvent
-import org.bukkit.event.player.PlayerQuitEvent
-import org.bukkit.event.player.PlayerRespawnEvent
-import org.bukkit.event.player.PlayerTeleportEvent
+import org.bukkit.event.player.*
 
 class LatteListener(private val latte: Latte) : Listener {
 
     @EventHandler
-    fun onTeleportEntity(event: EntityTeleportEvent) {
-        val toWorld = event.to?.world ?: return
-        val fromWorld = event.from.world
-        if (!fromWorld.isRelated(toWorld)) {
+    fun onPlayerAdvancementCriterionGrant(event: PlayerAdvancementCriterionGrantEvent) {
+        if(!event.player.world.rootWorld.advancementsAllowed) {
             event.isCancelled = true
         }
     }
 
     @EventHandler
-    fun onTeleport(event: PlayerTeleportEvent) {
+    fun onPlayerStatisticIncrement(event: PlayerStatisticIncrementEvent) {
+        if(!event.player.world.rootWorld.statsAllowed) {
+            event.isCancelled = true
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    fun onEntityTeleport(event: EntityTeleportEvent) {
+        if (event.isCancelled) return
+
+        val toLocation = event.to ?: return
+        val fromWorld = event.from.world
+        val toWorld = toLocation.world ?: return
+
+        // If worlds are the same, no need to check further
+        if (fromWorld == toWorld) return
+
+        // Cancel teleport if worlds are unrelated
+        if (!fromWorld.isRelated(toWorld)) {
+            event.isCancelled = true
+        }
+    }
+
+
+    @EventHandler
+    fun onPlayerPortal(event: PlayerPortalEvent) {
+        if (event.isCancelled) return
+        var targetEnvironment = when (event.cause) {
+            PlayerTeleportEvent.TeleportCause.NETHER_PORTAL -> World.Environment.NETHER
+            PlayerTeleportEvent.TeleportCause.END_PORTAL -> World.Environment.THE_END
+            else -> return
+        }
+
+        val fromWorld = event.from.world
+        if (fromWorld.environment == World.Environment.NETHER || fromWorld.environment == World.Environment.THE_END) {
+            targetEnvironment = World.Environment.NORMAL
+        }
+
+        // Set new destination
+        event.to.world = fromWorld.getRelatedWorld(targetEnvironment) ?: run {
+            event.isCancelled = true
+            return
+        }
+
+        // Allow portal creation only for Nether portals
+        if (event.cause == PlayerTeleportEvent.TeleportCause.NETHER_PORTAL) {
+            event.canCreatePortal = true
+        }
+    }
+
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    fun onPlayerTeleport(event: PlayerTeleportEvent) {
+        if (event.isCancelled) return
+
+        // Ignore these teleport causes
         if (event.cause in setOf(
                 PlayerTeleportEvent.TeleportCause.EXIT_BED,
                 PlayerTeleportEvent.TeleportCause.DISMOUNT,
                 PlayerTeleportEvent.TeleportCause.CHORUS_FRUIT,
-                PlayerTeleportEvent.TeleportCause.END_GATEWAY,
+                PlayerTeleportEvent.TeleportCause.END_GATEWAY
             )
         ) return
+
         val fromWorld = event.from.world
-        val toWorld: World = event.to.world
-        if (fromWorld == toWorld) return
+        val toLocation = event.to
+        val toWorld = toLocation.world ?: return
+
+        if (fromWorld == toWorld || fromWorld.isRelated(toWorld)) return
+
+        val player = event.player
+
+        // Allow Nether & End portal teleports while applying world settings
         if (event.cause in setOf(
                 PlayerTeleportEvent.TeleportCause.NETHER_PORTAL,
                 PlayerTeleportEvent.TeleportCause.END_PORTAL
             )
         ) {
-            if (!fromWorld.isRelated(toWorld)) {
-                event.isCancelled = true
-                return
-            }
+            player.applySettings(toWorld)
+            return
         }
-        val player = event.player
-        latte.loadDataFile(player, fromWorld, toWorld) {
-            player.teleport(event.to, PlayerTeleportEvent.TeleportCause.EXIT_BED)
-        }
+
+        // Cancel & manually handle teleportation for unrelated worlds
+        event.isCancelled = true
+        teleport(player, fromWorld, toWorld, toLocation)
     }
 
-    @EventHandler
-    fun onRespawn(event: PlayerRespawnEvent) {
+
+    @EventHandler(priority = EventPriority.LOW)
+    fun onPlayerRespawn(event: PlayerRespawnEvent) {
         val player = event.player
         val fromWorld = player.world
-        val respawnLocation = player.respawnLocation ?: fromWorld.spawnLocation
-        event.respawnLocation = respawnLocation
-        val toWorld = respawnLocation.world
-        if (fromWorld == toWorld) return
-        latte.runLater {
-            latte.loadDataFile(player, fromWorld, toWorld) {
-                player.teleport(respawnLocation, PlayerTeleportEvent.TeleportCause.EXIT_BED)
+        val respawnLocation = event.respawnLocation
+        val toWorld = respawnLocation.world ?: return
+
+        // No need to reassign event.respawnLocation, it's already set
+        if (fromWorld == toWorld || fromWorld.isRelated(toWorld)) return
+
+        // Ensure teleportation happens smoothly
+        teleport(player, fromWorld, toWorld, respawnLocation)
+    }
+
+
+    private fun teleport(player: Player, fromWorld: World, toWorld: World, location: Location) {
+        async {
+            player.saveData(fromWorld)
+            player.loadData(toWorld)
+            sync {
+                player.loadData()
+                player.applySettings(toWorld)
+
+                // Do not handle teleport event again
+                player.teleport(location, PlayerTeleportEvent.TeleportCause.EXIT_BED)
             }
         }
     }
 
-    @EventHandler
-    fun onLogin(event: PlayerLoginEvent) {
-        latte.runLater((latte.tps / 10).toLong()) {
-            val player = event.player
-            val world = player.world
-            latte.loadDataFile(player, world)
-            latte.runLater((latte.tps / 10).toLong()) {
-                latte.update(player)
-                latte.setDefaultGamemode(player, world)
-            }
-        }
-    }
-
-    @EventHandler
-    fun onQuit(event: PlayerQuitEvent) {
+    @EventHandler(priority = EventPriority.HIGHEST)
+    fun onPlayerJoin(event: PlayerJoinEvent) {
         val player = event.player
-        latte.saveDataFile(player, player.world)
+
+        if (player.latteWorld == null) {
+            async {
+                player.loadData(player.world) // Load data asynchronously
+                sync {
+                    player.loadData()
+                    player.applySettings(player.world)
+                }
+            }
+        } else {
+            player.applySettings(player.world)
+        }
+    }
+
+
+    @EventHandler
+    fun onPlayerQuit(event: PlayerQuitEvent) {
+        event.player.apply { saveData(world) }
     }
 }
