@@ -51,7 +51,7 @@ fun Player.saveData(world: World) {
 /**
  * The world the player was last teleported to.
  */
-val Player.latteWorld: World? get() = getPDC<String>(Latte.key(LATTE_WORLD))?.let { Bukkit.getWorld(it) }
+val Player.latteWorld: String? get() = getPDC<String>(Latte.key(LATTE_WORLD))
 
 /**
  * Create a new data file for the specified [world]. This data file will copy [this] player's current

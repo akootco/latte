@@ -144,7 +144,8 @@ class LatteListener(private val latte: Latte) : Listener {
     fun onPlayerJoin(event: PlayerJoinEvent) {
         val player = event.player
 
-        if (player.latteWorld == null) {
+        val latteWorld = player.latteWorld
+        if (latteWorld != null && player.server.getWorld(latteWorld) == null) {
             async {
                 player.loadData(player.world) // Load data asynchronously
                 sync {
@@ -152,9 +153,9 @@ class LatteListener(private val latte: Latte) : Listener {
                     player.applySettings(player.world)
                 }
             }
-        } else {
-            player.applySettings(player.world)
+            return
         }
+        player.applySettings(player.world)
     }
 
 
