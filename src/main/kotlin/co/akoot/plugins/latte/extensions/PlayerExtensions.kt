@@ -35,7 +35,9 @@ fun Player.loadData(world: World) {
     val rootWorld = world.rootWorld
     val dataFile = getDataFile(rootWorld)
     if(!dataFile.exists()) createDataFile(rootWorld)
+    val pdc = persistentDataContainer.serializeToBytes()
     dataFile.copyTo(getDataFile(), true)
+    persistentDataContainer.readFromBytes(pdc)
 }
 
 /**
