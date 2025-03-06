@@ -1,8 +1,8 @@
 package co.akoot.plugins.latte.commands
 
 import co.akoot.plugins.bluefox.api.FoxCommand
+import co.akoot.plugins.bluefox.api.Kolor
 import co.akoot.plugins.bluefox.api.XYZ
-import co.akoot.plugins.bluefox.util.Text.Companion.accented
 import co.akoot.plugins.bluefox.util.Text.Companion.invoke
 import co.akoot.plugins.latte.Latte
 import co.akoot.plugins.latte.extensions.WorldKeys
@@ -180,8 +180,12 @@ class LatteCommand(private val latte: Latte) :
                                 }
                                 config.set(key, value)
                                 Result.success(
-                                    "Set "() + key.accented() + " to " + value.toString()
-                                        .accented() + " for " + worldName.accented()
+                                    Kolor.TEXT("Set ") +
+                                            Kolor.ACCENT(key) +
+                                            Kolor.TEXT(" to ") +
+                                            Kolor.ALT(value.toString()) +
+                                            Kolor.TEXT(" for ") +
+                                            Kolor.ACCENT(worldName)
                                 ).send(sender).value
                             }
                             else -> sendUsage(sender)
@@ -198,11 +202,6 @@ class LatteCommand(private val latte: Latte) :
                         val type = args.getOrNull(4)?.let { WorldType.valueOf(it.uppercase()) } ?: WorldType.NORMAL
                         val seed = args.getOrNull(5)?.toLong()
                         latte.createWorld(name, gameMode, environment, seed, type).send(sender).value != null
-                    }
-
-                    "debug" -> {
-                        val player = getPlayerSender(sender).send(sender).value ?: return false
-                        Result.success("You are in "() + player.world.toString().accented()).send(sender).value
                     }
 
                     else -> sendUsage(sender)

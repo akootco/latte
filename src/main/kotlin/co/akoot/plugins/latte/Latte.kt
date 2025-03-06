@@ -4,11 +4,11 @@ import co.akoot.plugins.bluefox.BlueFox
 import co.akoot.plugins.bluefox.api.FoxCommand.Result
 import co.akoot.plugins.bluefox.api.FoxConfig
 import co.akoot.plugins.bluefox.api.FoxPlugin
+import co.akoot.plugins.bluefox.api.Kolor
 import co.akoot.plugins.bluefox.api.XYZ
+import co.akoot.plugins.bluefox.extensions.invoke
 import co.akoot.plugins.bluefox.util.Text
-import co.akoot.plugins.bluefox.util.Text.Companion.accented
 import co.akoot.plugins.bluefox.util.Text.Companion.copy
-import co.akoot.plugins.bluefox.util.Text.Companion.errorAccented
 import co.akoot.plugins.bluefox.util.Text.Companion.invoke
 import co.akoot.plugins.latte.commands.LatteCommand
 import co.akoot.plugins.latte.extensions.*
@@ -62,52 +62,52 @@ class Latte : FoxPlugin("latte") {
         val worlds = getWorldFolders()
         val loaded = worlds.filter { it.value }.map { it.key }
         val unloaded = worlds.filterNot { it.value }.map { it.key }
-        val message = Text.list(unloaded, itemColor = "player", postfix = "\n") + Text.list(loaded)
+        val message = Text.list(unloaded, itemKolor = Kolor.WARNING, postfix = "\n") + Text.list(loaded)
         return Result.success(message.component)
     }
 
     fun delete(name: String): Result<Boolean> {
-        val world = server.getWorld(name) ?: return Result.fail("World "() + name.errorAccented() + " does not exist!")
+        val world = server.getWorld(name) ?: return Result.fail(Kolor.ERROR("World ") + Kolor.ERROR.accent(name) + Kolor.ERROR(" does not exist!"))
         server.unloadWorld(world, false)
         world.config.file.delete()
         world.worldFolder.deleteRecursively()
-        return Result.success("World "() + name.accented() + " deleted successfully! RIP")
+        return Result.success(Kolor.TEXT("World ") + Kolor.ACCENT(name) + Kolor.TEXT(" deleted successfully! RIP"))
     }
 
     fun load(name: String, environment: Environment? = null): Result<Boolean> {
-        server.getWorld(name)?.let { return Result.fail("World "() + it.name.errorAccented() + " already loaded!") }
+        server.getWorld(name)?.let { return Result.fail(Kolor.ERROR("World ") + Kolor.ERROR.accent(it.name) + Kolor.ERROR(" already loaded!")) }
         val worldCreator = WorldCreator(name)
         val config = getWorldConfig(name)
         val env = environment ?: config?.getString("environment")?.let { Environment.valueOf(it) } ?: Environment.NORMAL
         worldCreator.environment(env)
         val world =
-            worldCreator.createWorld() ?: return Result.fail("World "() + name.errorAccented() + " failed to load!")
+            worldCreator.createWorld() ?: return Result.fail(Kolor.ERROR("World ") + Kolor.ERROR.accent(name) + Kolor.ERROR(" failed to load!"))
         config?.apply {
             set("environment", world.environment.name)
         }
-        return Result.success("World "() + world.name.accented() + " has been loaded!")
+        return Result.success(Kolor.TEXT("World ") + Kolor.ACCENT(name) + Kolor.TEXT(" has been loaded!"))
     }
 
     fun unload(name: String): Result<Boolean> {
-        val world = server.getWorld(name) ?: return Result.fail("World "() + name.errorAccented() + "could not be unloaded!")
+        val world = server.getWorld(name) ?: return Result.fail(Kolor.ERROR("World ") + Kolor.ERROR.accent(name) + Kolor.ERROR(" could not be unloaded!"))
         for (player in world.players) {
             player.teleport(player.respawnLocation ?: BlueFox.spawnLocation)
         }
         val environment = world.environment.name
         if (!server.unloadWorld(world, true))
-            return Result.fail("World "() + world.name.errorAccented() + " could not be unloaded!")
+            return Result.fail(Kolor.ERROR("World ") + Kolor.ERROR.accent(name) + Kolor.ERROR(" could not be unloaded!"))
         world.config.set("environment", environment)
-        return Result.success("World "() + world.name.accented() + " has been unloaded!")
+        return Result.success(Kolor.TEXT("World ") + Kolor.ACCENT(name) + Kolor.TEXT(" has been unloaded!"))
     }
 
     fun teleport(player: Player, name: String, pos: XYZ? = null): Result<Boolean> {
-        val world = server.getWorld(name) ?: return Result.fail("World " + name.errorAccented() + " is not loaded!")
+        val world = server.getWorld(name) ?: return Result.fail(Kolor.ERROR("World ") + Kolor.ERROR.accent(name) + Kolor.ERROR(" is not loaded!"))
         var location = world.spawnLocation
         if (pos != null) {
             location = Location(world, pos.x, pos.y, pos.z)
         }
         player.teleport(location)
-        return Result.success("Teleporting to "() + XYZ(location) + " in " + world.name.accented() + ".")
+        return Result.success(Kolor.TEXT("Teleporting to ") + XYZ(location) + " in " + Kolor.ACCENT(world.name))//Result.success("Teleporting to "() + XYZ(location) + " in " + world.name.accented() + ".")
     }
 
     fun getWorldFolders(): Map<String, Boolean> {
@@ -142,9 +142,17 @@ class Latte : FoxPlugin("latte") {
         if (world == null) return Result(null, "There was some kinda error trying to create that world...")
         return Result(
             world,
-            "Created world "() + world.name.accented() + " (" + (gameMode ?: GameMode.SURVIVAL).name.lowercase()
-                .accented() + "/" + (environment ?: Environment.NORMAL).name.lowercase().accented() + "/" + (type
-                ?: WorldType.NORMAL).name.lowercase().accented() + ") with seed " + (seed ?: creator.seed()).copy()
+            Kolor.TEXT("Created world ") +
+                    Kolor.ACCENT(world.name) +
+                    Kolor.TEXT(" (") +
+                    Kolor.ACCENT((gameMode ?: GameMode.SURVIVAL).name.lowercase() +
+                    Kolor.TEXT("/") +
+                    Kolor.ALT((environment ?: Environment.NORMAL).name.lowercase()) +
+                    Kolor.TEXT("/") +
+                    Kolor.ACCENT((type ?: WorldType.NORMAL).name.lowercase()) +
+                    Kolor.TEXT(") with seed ") +
+                    (seed ?: creator.seed()).copy()
+                    )
         )
     }
 }
