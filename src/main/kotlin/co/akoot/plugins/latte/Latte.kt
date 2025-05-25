@@ -11,7 +11,9 @@ import co.akoot.plugins.bluefox.extensions.addToPDCList
 import co.akoot.plugins.bluefox.extensions.getPDCList
 import co.akoot.plugins.bluefox.extensions.invoke
 import co.akoot.plugins.bluefox.extensions.removeFromPDCList
+import co.akoot.plugins.bluefox.extensions.setMeta
 import co.akoot.plugins.bluefox.extensions.setPDC
+import co.akoot.plugins.bluefox.extensions.text
 import co.akoot.plugins.bluefox.util.Text
 import co.akoot.plugins.bluefox.util.Text.Companion.copy
 import co.akoot.plugins.bluefox.util.Text.Companion.invoke
@@ -21,11 +23,16 @@ import co.akoot.plugins.latte.extensions.*
 import org.bukkit.*
 import org.bukkit.World.Environment
 import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
+import org.bukkit.event.Listener
+import org.bukkit.event.block.Action
+import org.bukkit.event.player.PlayerInteractEvent
 import java.io.File
 import java.io.FileFilter
 import kotlin.io.path.exists
 
-class Latte : FoxPlugin("latte") {
+class Latte : FoxPlugin("latte"), Listener {
 
     object Permission {
         const val GAMEMODE_BYPASS = "latte.bypass.gamemode"
@@ -88,6 +95,10 @@ class Latte : FoxPlugin("latte") {
     override fun registerCommands() {
         registerCommand(LatteCommand(this))
         registerCommand(SafeZoneCommand(this))
+    }
+
+    override fun registerEvents() {
+        registerEventListener(this)
     }
 
     private fun loadWorlds() {
@@ -205,5 +216,29 @@ class Latte : FoxPlugin("latte") {
                     (seed ?: creator.seed()).copy()
                     )
         )
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    fun onInteract(event: PlayerInteractEvent) {
+        if (!toolCheck(event.player)) return
+        val player = event.player
+        val action = event.action
+        if(action == Action.LEFT_CLICK_BLOCK) {
+            event.clickedBlock?.location?.let { loc ->
+                player.setMeta("tool.pos1", loc)
+                Text(player) {
+                    Kolor.ACCENT("Pos1") + Kolor.ALT(" set to ") + loc.text
+                }
+                event.isCancelled = true
+            }
+        } else if(action == Action.RIGHT_CLICK_BLOCK) {
+            event.clickedBlock?.location?.let { loc ->
+                player.setMeta("tool.pos2", loc)
+                Text(player) {
+                    Kolor.ACCENT("Pos2") + Kolor.ALT(" set to ") + loc.text
+                }
+                event.isCancelled = true
+            }
+        }
     }
 }
