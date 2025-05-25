@@ -1,16 +1,22 @@
 package co.akoot.plugins.latte
 
 import co.akoot.plugins.bluefox.BlueFox
+import co.akoot.plugins.bluefox.api.Area
 import co.akoot.plugins.bluefox.api.FoxCommand.Result
 import co.akoot.plugins.bluefox.api.FoxConfig
 import co.akoot.plugins.bluefox.api.FoxPlugin
 import co.akoot.plugins.bluefox.api.Kolor
 import co.akoot.plugins.bluefox.api.XYZ
+import co.akoot.plugins.bluefox.extensions.addToPDCList
+import co.akoot.plugins.bluefox.extensions.getPDCList
 import co.akoot.plugins.bluefox.extensions.invoke
+import co.akoot.plugins.bluefox.extensions.removeFromPDCList
+import co.akoot.plugins.bluefox.extensions.setPDC
 import co.akoot.plugins.bluefox.util.Text
 import co.akoot.plugins.bluefox.util.Text.Companion.copy
 import co.akoot.plugins.bluefox.util.Text.Companion.invoke
 import co.akoot.plugins.latte.commands.LatteCommand
+import co.akoot.plugins.latte.commands.SafeZoneCommand
 import co.akoot.plugins.latte.extensions.*
 import org.bukkit.*
 import org.bukkit.World.Environment
@@ -31,11 +37,45 @@ class Latte : FoxPlugin("latte") {
         fun key(key: String): NamespacedKey {
             return instance.key(key)
         }
+
+        val safeZones: MutableSet<Area> = mutableSetOf()
+
+        fun isInSafeZone(location: Location): Boolean {
+            for (safeZone in safeZones) {
+                if (safeZone.has(location)) return true
+            }
+            return false
+        }
+
+        fun addSafeZone(area: Area): Boolean {
+            val s1 = safeZones.add(area)
+            val s2 = area.world.addToPDCList(key("safe_zones"), area.serialize())
+            return s1 && s2
+        }
+
+        fun removeSafeZone(area: Area): Boolean {
+            val s1 = safeZones.remove(area)
+            val s2 = area.world.removeFromPDCList(key("safe_zones"), area.serialize())
+            return s1 && s2
+        }
+
+        fun clearSafeZones() {
+            for (area in safeZones) {
+                area.world.setPDC<List<String>>(key("safe_zones"), null)
+            }
+            safeZones.clear()
+        }
+
+        val tool = Material.BRUSH // lol
+        fun toolCheck(player: Player): Boolean {
+            return player.gameMode == GameMode.CREATIVE && player.hasPermission("choco.tool") && player.inventory.itemInMainHand.type == tool
+        }
     }
 
     override fun load() {
         instance = this
         loadWorlds()
+        loadSafeZones()
         registerEventListener(LatteListener(this))
     }
 
@@ -47,6 +87,7 @@ class Latte : FoxPlugin("latte") {
 
     override fun registerCommands() {
         registerCommand(LatteCommand(this))
+        registerCommand(SafeZoneCommand(this))
     }
 
     private fun loadWorlds() {
@@ -54,6 +95,16 @@ class Latte : FoxPlugin("latte") {
             val config = getWorldConfig(world) ?: continue
             if (config.getBoolean(WorldKeys.AUTO_LOAD) == true) {
                 if (load(world).value) logger.info("Loading world: $world")
+            }
+        }
+    }
+
+    fun loadSafeZones() {
+        for (world in server.worlds) {
+            val safeZoneValue = world.getPDCList<String>(key("safe_zones")) ?: continue
+            for (entry in safeZoneValue) {
+                val safeZone = Area.deserialize(world, entry) ?: continue
+                safeZones.add(safeZone)
             }
         }
     }
