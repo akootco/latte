@@ -1,8 +1,17 @@
-package co.akoot.plugins.latte
+package co.akoot.plugins.latte.listeners
 
 import co.akoot.plugins.bluefox.util.async
 import co.akoot.plugins.bluefox.util.sync
-import co.akoot.plugins.latte.extensions.*
+import co.akoot.plugins.latte.Latte
+import co.akoot.plugins.latte.extensions.advancementsAllowed
+import co.akoot.plugins.latte.extensions.applySettings
+import co.akoot.plugins.latte.extensions.getRelatedWorld
+import co.akoot.plugins.latte.extensions.isRelated
+import co.akoot.plugins.latte.extensions.latteWorld
+import co.akoot.plugins.latte.extensions.loadData
+import co.akoot.plugins.latte.extensions.rootWorld
+import co.akoot.plugins.latte.extensions.saveData
+import co.akoot.plugins.latte.extensions.statsAllowed
 import com.destroystokyo.paper.event.player.PlayerAdvancementCriterionGrantEvent
 import org.bukkit.Location
 import org.bukkit.World
@@ -11,23 +20,14 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityTeleportEvent
-import org.bukkit.event.player.*
+import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.event.player.PlayerPortalEvent
+import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.event.player.PlayerRespawnEvent
+import org.bukkit.event.player.PlayerStatisticIncrementEvent
+import org.bukkit.event.player.PlayerTeleportEvent
 
-class LatteListener(private val latte: Latte) : Listener {
-
-    @EventHandler
-    fun onPlayerAdvancementCriterionGrant(event: PlayerAdvancementCriterionGrantEvent) {
-        if(!event.player.world.rootWorld.advancementsAllowed) {
-            event.isCancelled = true
-        }
-    }
-
-    @EventHandler
-    fun onPlayerStatisticIncrement(event: PlayerStatisticIncrementEvent) {
-        if(!event.player.world.rootWorld.statsAllowed) {
-            event.isCancelled = true
-        }
-    }
+class MultiWorldListener(private val latte: Latte) : Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     fun onEntityTeleport(event: EntityTeleportEvent) {

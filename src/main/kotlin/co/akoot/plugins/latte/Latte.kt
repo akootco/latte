@@ -11,30 +11,26 @@ import co.akoot.plugins.bluefox.extensions.addToPDCList
 import co.akoot.plugins.bluefox.extensions.getPDCList
 import co.akoot.plugins.bluefox.extensions.invoke
 import co.akoot.plugins.bluefox.extensions.removeFromPDCList
-import co.akoot.plugins.bluefox.extensions.setMeta
 import co.akoot.plugins.bluefox.extensions.setPDC
-import co.akoot.plugins.bluefox.extensions.text
 import co.akoot.plugins.bluefox.util.Text
 import co.akoot.plugins.bluefox.util.Text.Companion.copy
-import co.akoot.plugins.bluefox.util.Text.Companion.invoke
 import co.akoot.plugins.latte.commands.LatteCommand
 import co.akoot.plugins.latte.commands.MobZoneCommand
 import co.akoot.plugins.latte.commands.SafeZoneCommand
 import co.akoot.plugins.latte.commands.ServerSafeZoneCommand
 import co.akoot.plugins.latte.extensions.*
+import co.akoot.plugins.latte.listeners.LatteListener
+import co.akoot.plugins.latte.listeners.MultiWorldListener
+import co.akoot.plugins.latte.listeners.ZoneListener
 import org.bukkit.*
 import org.bukkit.World.Environment
+import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
-import org.bukkit.event.EventHandler
-import org.bukkit.event.EventPriority
-import org.bukkit.event.Listener
-import org.bukkit.event.block.Action
-import org.bukkit.event.player.PlayerInteractEvent
 import java.io.File
 import java.io.FileFilter
 import kotlin.io.path.exists
 
-class Latte : FoxPlugin("latte"), Listener {
+class Latte : FoxPlugin("latte") {
 
     object Permission {
         const val GAMEMODE_BYPASS = "latte.bypass.gamemode"
@@ -48,6 +44,7 @@ class Latte : FoxPlugin("latte"), Listener {
         }
 
         val zones: MutableMap<String, MutableSet<Area>> = mutableMapOf()
+        val entityBlacklist: MutableMap<String, MutableSet<EntityType>> = mutableMapOf()
 
         fun isInZone(zoneName: String, location: Location): Boolean {
             for (zone in zones[zoneName] ?: return false) {
@@ -85,8 +82,7 @@ class Latte : FoxPlugin("latte"), Listener {
     override fun load() {
         instance = this
         loadWorlds()
-        loadSafeZones()
-        registerEventListener(LatteListener(this))
+        loadZones()
     }
 
     override fun unload() {
@@ -103,7 +99,11 @@ class Latte : FoxPlugin("latte"), Listener {
     }
 
     override fun registerEvents() {
-        registerEventListener(this)
+        if(settings.getBoolean("world_management") == true) {
+            registerEventListener(MultiWorldListener(this))
+        }
+        registerEventListener(LatteListener(this))
+        registerEventListener(ZoneListener(this))
     }
 
     private fun loadWorlds() {
@@ -115,7 +115,7 @@ class Latte : FoxPlugin("latte"), Listener {
         }
     }
 
-    fun loadSafeZones() {
+    fun loadZones() {
         for (world in server.worlds) {
             loadZone(world, "server_safe_zone")
             loadZone(world, "safe_zone")
@@ -124,13 +124,20 @@ class Latte : FoxPlugin("latte"), Listener {
     }
 
     fun loadZone(world: World, zoneName: String) {
-        zones[zoneName] = mutableSetOf()
-        val zoneValue = world.getPDCList<String>(key("zones.$zoneName")) ?: return
-        for (entry in zoneValue) {
-            val zone = Area.deserialize(world, entry) ?: continue
-            zones[zoneName]?.add(zone)
-        }
+        val loadedZones = zones.getOrPut(zoneName) { mutableSetOf() }
+        val loadedBlacklist = entityBlacklist.getOrPut(zoneName) { mutableSetOf() }
+
+        world.getPDCList<String>(key("zones.$zoneName"))
+            ?.mapNotNull { Area.deserialize(world, it) }
+            ?.forEach { loadedZones.add(it) }
+
+        settings.getStringList("zones.$zoneName.blacklisted_entities")
+            .mapNotNull { value ->
+                EntityType.entries.find { it.name.equals(value, ignoreCase = true) }
+            }
+            .forEach { loadedBlacklist.add(it) }
     }
+
 
     fun list(): Result<Boolean> {
         val worlds = getWorldFolders()
@@ -228,29 +235,5 @@ class Latte : FoxPlugin("latte"), Listener {
                     (seed ?: creator.seed()).copy()
                     )
         )
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST)
-    fun onInteract(event: PlayerInteractEvent) {
-        if (!toolCheck(event.player)) return
-        val player = event.player
-        val action = event.action
-        if(action == Action.LEFT_CLICK_BLOCK) {
-            event.clickedBlock?.location?.let { loc ->
-                player.setMeta("tool.pos1", loc)
-                Text(player) {
-                    Kolor.ACCENT("Pos1") + Kolor.ALT(" set to ") + loc.text
-                }
-                event.isCancelled = true
-            }
-        } else if(action == Action.RIGHT_CLICK_BLOCK) {
-            event.clickedBlock?.location?.let { loc ->
-                player.setMeta("tool.pos2", loc)
-                Text(player) {
-                    Kolor.ACCENT("Pos2") + Kolor.ALT(" set to ") + loc.text
-                }
-                event.isCancelled = true
-            }
-        }
     }
 }
