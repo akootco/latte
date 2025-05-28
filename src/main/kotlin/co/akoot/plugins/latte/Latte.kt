@@ -18,7 +18,9 @@ import co.akoot.plugins.bluefox.util.Text
 import co.akoot.plugins.bluefox.util.Text.Companion.copy
 import co.akoot.plugins.bluefox.util.Text.Companion.invoke
 import co.akoot.plugins.latte.commands.LatteCommand
+import co.akoot.plugins.latte.commands.MobZoneCommand
 import co.akoot.plugins.latte.commands.SafeZoneCommand
+import co.akoot.plugins.latte.commands.ServerSafeZoneCommand
 import co.akoot.plugins.latte.extensions.*
 import org.bukkit.*
 import org.bukkit.World.Environment
@@ -45,32 +47,33 @@ class Latte : FoxPlugin("latte"), Listener {
             return instance.key(key)
         }
 
-        val safeZones: MutableSet<Area> = mutableSetOf()
+        val zones: MutableMap<String, MutableSet<Area>> = mutableMapOf()
 
-        fun isInSafeZone(location: Location): Boolean {
-            for (safeZone in safeZones) {
-                if (safeZone.has(location)) return true
+        fun isInZone(zoneName: String, location: Location): Boolean {
+            for (zone in zones[zoneName] ?: return false) {
+                if (zone.has(location)) return true
             }
             return false
         }
 
-        fun addSafeZone(area: Area): Boolean {
-            val s1 = safeZones.add(area)
-            val s2 = area.world.addToPDCList(key("safe_zones"), area.serialize())
+        fun addZone(zoneName: String, area: Area): Boolean {
+            val s1 = zones[zoneName]?.add(area) ?: return false
+            val s2 = area.world.addToPDCList(key("zones.$zoneName"), area.serialize())
             return s1 && s2
         }
 
-        fun removeSafeZone(area: Area): Boolean {
-            val s1 = safeZones.remove(area)
-            val s2 = area.world.removeFromPDCList(key("safe_zones"), area.serialize())
+        fun removeZone(zoneName: String, area: Area): Boolean {
+            val s1 = zones[zoneName]?.remove(area) ?: return false
+            val s2 = area.world.removeFromPDCList(key("zones.$zoneName"), area.serialize())
             return s1 && s2
         }
 
-        fun clearSafeZones() {
-            for (area in safeZones) {
-                area.world.setPDC<List<String>>(key("safe_zones"), null)
+        fun clearZones(zoneName: String) {
+            val namedZone = zones[zoneName] ?: return
+            for (area in namedZone) {
+                area.world.setPDC<List<String>>(key("zones.$zoneName"), null)
             }
-            safeZones.clear()
+            namedZone.clear()
         }
 
         val tool = Material.BRUSH // lol
@@ -94,7 +97,9 @@ class Latte : FoxPlugin("latte"), Listener {
 
     override fun registerCommands() {
         registerCommand(LatteCommand(this))
+        registerCommand(ServerSafeZoneCommand(this))
         registerCommand(SafeZoneCommand(this))
+        registerCommand(MobZoneCommand(this))
     }
 
     override fun registerEvents() {
@@ -112,11 +117,18 @@ class Latte : FoxPlugin("latte"), Listener {
 
     fun loadSafeZones() {
         for (world in server.worlds) {
-            val safeZoneValue = world.getPDCList<String>(key("safe_zones")) ?: continue
-            for (entry in safeZoneValue) {
-                val safeZone = Area.deserialize(world, entry) ?: continue
-                safeZones.add(safeZone)
-            }
+            loadZone(world, "server_safe_zone")
+            loadZone(world, "safe_zone")
+            loadZone(world, "mob_zone")
+        }
+    }
+
+    fun loadZone(world: World, zoneName: String) {
+        zones[zoneName] = mutableSetOf()
+        val zoneValue = world.getPDCList<String>(key("zones.$zoneName")) ?: return
+        for (entry in zoneValue) {
+            val zone = Area.deserialize(world, entry) ?: continue
+            zones[zoneName]?.add(zone)
         }
     }
 
