@@ -26,7 +26,7 @@ class LatteCommand(private val latte: Latte) :
             id -> when (args.size) {
                 1 -> {
                     val suggestions =
-                        mutableListOf("load", "unload", "list", "tp", "tpp", "delete", "config", "create")
+                        mutableListOf("load", "unload", "list", "tp", "tpp", "delete", "config", "create", "reload")
                     val arg = args[0]
                     if (arg.startsWith("delete") || arg.startsWith("load")) {
                         suggestions += "$arg-all"
@@ -120,7 +120,10 @@ class LatteCommand(private val latte: Latte) :
                     "load" -> latte.load(args[1], args.getOrNull(2)?.let { Environment.valueOf(it.uppercase()) }).send(sender).value
                     "unload" -> latte.unload(args[1]).send(sender).value
                     "list" -> latte.list().send(sender).value
-
+                    "reload" -> {
+                        latte.settings.reload()
+                        return Result.success("Reloaded config!").send(sender).value
+                    }
                     "tp" -> {
                         val player = getPlayerSender(sender).send(sender).value ?: return false
                         val worldName = args[1]

@@ -82,7 +82,9 @@ class Latte : FoxPlugin("latte") {
     override fun load() {
         instance = this
         loadWorlds()
-        loadZones()
+        settings.onLoad = {
+            loadZones()
+        }
     }
 
     override fun unload() {
@@ -116,6 +118,9 @@ class Latte : FoxPlugin("latte") {
     }
 
     fun loadZones() {
+        zones.clear()
+        entityBlacklist.clear()
+        logger.info("Loading zones...")
         for (world in server.worlds) {
             loadZone(world, "server_safe_zone")
             loadZone(world, "safe_zone")
