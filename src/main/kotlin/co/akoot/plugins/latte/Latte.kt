@@ -54,8 +54,8 @@ class Latte : FoxPlugin("latte") {
         }
 
         fun addZone(zoneName: String, area: Area): Boolean {
-            val s1 = zones[zoneName]?.add(area) ?: return false
-            val s2 = area.world.addToPDCList(key("zones.$zoneName"), area.serialize())
+            val s1 = zones.getOrPut(zoneName) { mutableSetOf() }.add(area) //zones[zoneName]?.add(area) ?: return false
+            val s2 =  area.world.addToPDCList(key("zones.$zoneName"), area.serialize())
             return s1 && s2
         }
 
@@ -82,9 +82,8 @@ class Latte : FoxPlugin("latte") {
     override fun load() {
         instance = this
         loadWorlds()
-        settings.onLoad = {
-            loadZones()
-        }
+        loadZones()
+        settings.onLoad = { loadZones() }
     }
 
     override fun unload() {

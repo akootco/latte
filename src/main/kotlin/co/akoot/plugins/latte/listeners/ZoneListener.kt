@@ -1,12 +1,12 @@
 package co.akoot.plugins.latte.listeners
 
 import co.akoot.plugins.latte.Latte
-import org.bukkit.entity.EntityType
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.entity.EntityExplodeEvent
 import org.bukkit.event.entity.EntitySpawnEvent
 
-class ZoneListener(val plugin: Latte): Listener {
+class ZoneListener(val plugin: Latte) : Listener {
     @EventHandler
     fun onEntitySpawn(event: EntitySpawnEvent) {
         val location = event.location
@@ -26,6 +26,13 @@ class ZoneListener(val plugin: Latte): Listener {
                 event.isCancelled = true
             }
         }
+    }
+
+    @EventHandler
+    fun onExplosion(event: EntityExplodeEvent) {
+        val location = event.entity.location
+        if (Latte.isInZone("safe_zone", location) || Latte.isInZone("server_safe_zone", location)) event.blockList()
+            .clear()
     }
 
 }
