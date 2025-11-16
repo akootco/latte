@@ -68,3 +68,10 @@ fun Player.createDataFile(world: World) {
     totalExperience = 0
     saveData(world)
 }
+
+fun Player.rtp(world: World = this.world, radiusX: Double = world.worldBorder.size / 2, radiusZ: Double = radiusX): Location {
+    val safeLocation = world.randomSafeLocation(radiusX, radiusZ)
+    val randomLocation = safeLocation.facing(yaw, pitch)
+    teleport(randomLocation)
+    return randomLocation
+}

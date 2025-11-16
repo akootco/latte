@@ -6,10 +6,14 @@ import co.akoot.plugins.latte.extensions.WorldKeys.ALLOW_ADVANCEMENTS
 import co.akoot.plugins.latte.extensions.WorldKeys.ALLOW_FLIGHT
 import co.akoot.plugins.latte.extensions.WorldKeys.ALLOW_STATS
 import co.akoot.plugins.latte.extensions.WorldKeys.GAME_MODE
+import co.akoot.plugins.latte.extensions.WorldKeys.IS_ANARCHY
 import co.akoot.plugins.latte.extensions.WorldKeys.PARENT_WORLD
 import org.bukkit.*
 import org.bukkit.World.Environment
+import org.bukkit.entity.Entity
 import java.io.File
+import kotlin.random.Random
+import kotlin.unaryMinus
 
 
 object WorldKeys {
@@ -21,6 +25,7 @@ object WorldKeys {
     const val AUTO_LOAD = "autoload"
     const val ALLOW_ADVANCEMENTS = "allowAdvancements"
     const val ALLOW_STATS = "allowStats"
+    const val IS_ANARCHY = "isAnarchy"
 
     val booleans = setOf(AUTO_LOAD, ALLOW_FLIGHT, ALLOW_ADVANCEMENTS, ALLOW_STATS)
     val enums = setOf(GAME_MODE, ENVIRONMENT, TYPE)
@@ -34,6 +39,8 @@ val World.gameMode: GameMode get() = config.getString(GAME_MODE)?.let { GameMode
 val World.flyMode: Boolean get() = config.getBoolean(ALLOW_FLIGHT) ?: false
 val World.statsAllowed: Boolean get() = config.getBoolean(ALLOW_STATS) ?: true
 val World.advancementsAllowed: Boolean get() = config.getBoolean(ALLOW_ADVANCEMENTS) ?: true
+
+val World.isAnarchy: Boolean get() = config.getBoolean(IS_ANARCHY) ?: false
 
 /**
  * Get the related world based on the specified [environment].
@@ -89,4 +96,15 @@ fun World.isRelatedEnvironment(world: World): Boolean {
 fun World.getDataFile(offlinePlayer: OfflinePlayer): File {
     return worldFolder.resolve("latte/playerdata").mkdirp()
         .resolve("${offlinePlayer.uniqueId}.dat")
+}
+
+fun World.randomSafeLocation(radiusX: Double = this.worldBorder.size, radiusZ: Double = radiusX): Location {
+    val randomLocation = Location(
+        this,
+        Random.nextDouble(-radiusX, radiusX),
+        Random.nextDouble(this.minHeight.toDouble(), this.maxHeight.toDouble()),
+        Random.nextDouble(-radiusZ, radiusZ)
+    )
+
+    return randomLocation.lowestSafeLocation
 }
