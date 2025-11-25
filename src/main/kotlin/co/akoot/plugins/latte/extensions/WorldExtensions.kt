@@ -1,13 +1,16 @@
 package co.akoot.plugins.latte.extensions
 
 import co.akoot.plugins.bluefox.api.FoxConfig
+import co.akoot.plugins.bluefox.extensions.getPDC
 import co.akoot.plugins.bluefox.extensions.mkdirp
+import co.akoot.plugins.latte.Latte
 import co.akoot.plugins.latte.extensions.WorldKeys.ALLOW_ADVANCEMENTS
 import co.akoot.plugins.latte.extensions.WorldKeys.ALLOW_FLIGHT
 import co.akoot.plugins.latte.extensions.WorldKeys.ALLOW_STATS
 import co.akoot.plugins.latte.extensions.WorldKeys.GAME_MODE
 import co.akoot.plugins.latte.extensions.WorldKeys.IS_ANARCHY
 import co.akoot.plugins.latte.extensions.WorldKeys.PARENT_WORLD
+import co.akoot.plugins.latte.extensions.WorldKeys.SEPARATE_CHAT
 import org.bukkit.*
 import org.bukkit.World.Environment
 import org.bukkit.entity.Entity
@@ -27,9 +30,23 @@ object WorldKeys {
     const val ALLOW_STATS = "allowStats"
     const val IS_ANARCHY = "isAnarchy"
 
-    val booleans = setOf(AUTO_LOAD, ALLOW_FLIGHT, ALLOW_ADVANCEMENTS, ALLOW_STATS)
+    const val SEPARATE_CHAT = "separateChat"
+
+    val booleans = setOf(AUTO_LOAD, ALLOW_FLIGHT, ALLOW_ADVANCEMENTS, ALLOW_STATS, SEPARATE_CHAT, IS_ANARCHY)
     val enums = setOf(GAME_MODE, ENVIRONMENT, TYPE)
-    val all = setOf(PARENT_WORLD) + enums + booleans
+    val strings = setOf(PARENT_WORLD)
+    val all = strings + enums + booleans
+
+    fun from(world: World): Map<String, Any> {
+        val map = mutableMapOf<String, Any>()
+        for(key in booleans) {
+            map += key to (world.config.getBoolean(key) ?: false)
+        }
+        for(key in enums + strings) {
+            map += key to (world.config.getString(key) ?: "DEFAULT")
+        }
+        return map
+    }
 }
 
 val World.config: FoxConfig get() = FoxConfig(worldFolder.resolve("latte.conf"))
@@ -41,6 +58,9 @@ val World.statsAllowed: Boolean get() = config.getBoolean(ALLOW_STATS) ?: true
 val World.advancementsAllowed: Boolean get() = config.getBoolean(ALLOW_ADVANCEMENTS) ?: true
 
 val World.isAnarchy: Boolean get() = config.getBoolean(IS_ANARCHY) ?: false
+
+val World.isSeparateChat: Boolean get() = config.getBoolean(SEPARATE_CHAT) ?: false
+
 
 /**
  * Get the related world based on the specified [environment].
@@ -98,13 +118,14 @@ fun World.getDataFile(offlinePlayer: OfflinePlayer): File {
         .resolve("${offlinePlayer.uniqueId}.dat")
 }
 
-fun World.randomSafeLocation(radiusX: Double = this.worldBorder.size, radiusZ: Double = radiusX): Location {
+fun World.randomSafeLocation(radiusX: Double = this.worldBorder.size, radiusZ: Double = radiusX, radiusY: Double = this.maxHeight.toDouble()): Location {
     val randomLocation = Location(
         this,
         Random.nextDouble(-radiusX, radiusX),
-        Random.nextDouble(this.minHeight.toDouble(), this.maxHeight.toDouble()),
+        Random.nextDouble(this.minHeight.toDouble(), radiusY),
         Random.nextDouble(-radiusZ, radiusZ)
     )
 
     return randomLocation.lowestSafeLocation
 }
+

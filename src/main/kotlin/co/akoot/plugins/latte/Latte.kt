@@ -14,8 +14,10 @@ import co.akoot.plugins.bluefox.extensions.removeFromPDCList
 import co.akoot.plugins.bluefox.extensions.setPDC
 import co.akoot.plugins.bluefox.util.Text
 import co.akoot.plugins.bluefox.util.Text.Companion.copy
+import co.akoot.plugins.latte.commands.GlobalCommand
 import co.akoot.plugins.latte.commands.LatteCommand
 import co.akoot.plugins.latte.commands.MobZoneCommand
+import co.akoot.plugins.latte.commands.RtpCommand
 import co.akoot.plugins.latte.commands.SafeZoneCommand
 import co.akoot.plugins.latte.commands.ServerSafeZoneCommand
 import co.akoot.plugins.latte.extensions.*
@@ -97,6 +99,8 @@ class Latte : FoxPlugin("latte") {
         registerCommand(ServerSafeZoneCommand(this))
         registerCommand(SafeZoneCommand(this))
         registerCommand(MobZoneCommand(this))
+        registerCommand(RtpCommand(this))
+        registerCommand(GlobalCommand(this))
     }
 
     override fun registerEvents() {
@@ -227,7 +231,7 @@ class Latte : FoxPlugin("latte") {
         if (world == null) return Result(null, "There was some kinda error trying to create that world...")
         return Result(
             world,
-            Kolor.TEXT("Created world ") +
+            (Kolor.TEXT("Created world ") +
                     Kolor.ACCENT(world.name) +
                     Kolor.TEXT(" (") +
                     Kolor.ACCENT((gameMode ?: GameMode.SURVIVAL).name.lowercase() +
@@ -237,7 +241,7 @@ class Latte : FoxPlugin("latte") {
                     Kolor.ACCENT((type ?: WorldType.NORMAL).name.lowercase()) +
                     Kolor.TEXT(") with seed ") +
                     (seed ?: creator.seed()).copy()
-                    )
+                    )).component
         )
     }
 }

@@ -3,6 +3,8 @@ package co.akoot.plugins.latte.commands
 import co.akoot.plugins.bluefox.api.FoxCommand
 import co.akoot.plugins.bluefox.api.Kolor
 import co.akoot.plugins.bluefox.api.XYZ
+import co.akoot.plugins.bluefox.extensions.sendMessage
+import co.akoot.plugins.bluefox.util.Text
 import co.akoot.plugins.bluefox.util.Text.Companion.invoke
 import co.akoot.plugins.latte.Latte
 import co.akoot.plugins.latte.extensions.WorldKeys
@@ -11,6 +13,7 @@ import org.bukkit.World
 import org.bukkit.World.Environment
 import org.bukkit.WorldType
 import org.bukkit.command.CommandSender
+import org.bukkit.entity.Player
 import kotlin.random.Random
 
 //TODO this can probably be simplified
@@ -26,7 +29,7 @@ class LatteCommand(private val latte: Latte) :
             id -> when (args.size) {
                 1 -> {
                     val suggestions =
-                        mutableListOf("load", "unload", "list", "tp", "tpp", "delete", "config", "create", "reload")
+                        mutableListOf("load", "unload", "list", "tp", "tpp", "delete", "config", "create", "reload", "info")
                     val arg = args[0]
                     if (arg.startsWith("delete") || arg.startsWith("load")) {
                         suggestions += "$arg-all"
@@ -117,6 +120,16 @@ class LatteCommand(private val latte: Latte) :
             "lunload" -> onCommand(sender, id, arrayOf("unload") + args)
             id -> {
                 return when (args[0]) {
+                    "info" -> {
+                        val player = getPlayerSender(sender).value ?: return false
+                        var message = Kolor.TEXT("You are in ") + Kolor.ACCENT(player.world.name) + "."
+                        val map = WorldKeys.from(player.world).map { (key, value) -> Kolor.ACCENT(key) + Kolor.TEXT(" = ") + Kolor.ALT(value.toString()) }
+                        for(entry in map) {
+                            message = message + Text.newline + entry
+                        }
+                        sender.sendMessage(message)
+                        return true
+                    }
                     "load" -> latte.load(args[1], args.getOrNull(2)?.let { Environment.valueOf(it.uppercase()) }).send(sender).value
                     "unload" -> latte.unload(args[1]).send(sender).value
                     "list" -> latte.list().send(sender).value

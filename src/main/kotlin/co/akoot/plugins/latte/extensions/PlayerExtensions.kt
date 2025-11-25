@@ -69,9 +69,14 @@ fun Player.createDataFile(world: World) {
     saveData(world)
 }
 
-fun Player.rtp(world: World = this.world, radiusX: Double = world.worldBorder.size / 2, radiusZ: Double = radiusX): Location {
-    val safeLocation = world.randomSafeLocation(radiusX, radiusZ)
+fun Player.rtp(world: World = this.world, radiusX: Double? = null, radiusZ: Double? = radiusX, radiusY: Double? = null): Location {
+    val maxRadius = world.worldBorder.size / 2
+    val safeLocation = world.randomSafeLocation(radiusX ?: maxRadius, radiusZ ?: maxRadius, radiusY ?: world.maxHeight.toDouble())
     val randomLocation = safeLocation.facing(yaw, pitch)
     teleport(randomLocation)
     return randomLocation
 }
+
+var Player.globalChatEnabled
+    get() = config.getBoolean("flags.globalChat") ?: false
+    set(value) = config.set("flags.globalChat", value)

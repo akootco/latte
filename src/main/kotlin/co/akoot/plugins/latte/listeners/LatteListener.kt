@@ -7,6 +7,11 @@ import co.akoot.plugins.bluefox.extensions.text
 import co.akoot.plugins.bluefox.util.Text
 import co.akoot.plugins.latte.Latte
 import co.akoot.plugins.latte.extensions.advancementsAllowed
+import co.akoot.plugins.latte.extensions.globalChatEnabled
+import co.akoot.plugins.latte.extensions.isAnarchy
+import co.akoot.plugins.latte.extensions.isRelated
+import co.akoot.plugins.latte.extensions.isSeparateChat
+import co.akoot.plugins.latte.extensions.randomSafeLocation
 import co.akoot.plugins.latte.extensions.rootWorld
 import co.akoot.plugins.latte.extensions.statsAllowed
 import com.destroystokyo.paper.event.player.PlayerAdvancementCriterionGrantEvent
@@ -16,10 +21,26 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
+import org.bukkit.event.player.AsyncPlayerChatEvent
 import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.event.player.PlayerRespawnEvent
 import org.bukkit.event.player.PlayerStatisticIncrementEvent
 
 class LatteListener(plugin: Latte) : Listener {
+
+    //todo: per-world chat?
+    @EventHandler(priority = EventPriority.HIGHEST)
+    fun onAsyncChat(event: AsyncPlayerChatEvent) {
+        if (event.isCancelled) return
+
+        val world = event.player.world
+        event.recipients.removeAll {
+            val sameWorld = world == it.world
+            val relatedWorld = it.world.isRelated(world)
+            !it.globalChatEnabled && (world.isSeparateChat || it.world.isSeparateChat) && !sameWorld && !relatedWorld
+        }
+    }
+
     @EventHandler
     fun onPlayerAdvancementCriterionGrant(event: PlayerAdvancementCriterionGrantEvent) {
         if (!event.player.world.rootWorld.advancementsAllowed) {
@@ -32,6 +53,14 @@ class LatteListener(plugin: Latte) : Listener {
         if (!event.player.world.rootWorld.statsAllowed) {
             event.isCancelled = true
         }
+    }
+
+    @EventHandler
+    fun onPlayerRespawn(event: PlayerRespawnEvent) {
+        val world = event.respawnLocation.world
+        if(!world.isAnarchy) return
+        if(!event.isMissingRespawnBlock) return
+        event.respawnLocation = world.randomSafeLocation()
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

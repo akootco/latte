@@ -7,12 +7,14 @@ import co.akoot.plugins.latte.extensions.advancementsAllowed
 import co.akoot.plugins.latte.extensions.applySettings
 import co.akoot.plugins.latte.extensions.getRelatedWorld
 import co.akoot.plugins.latte.extensions.isRelated
+import co.akoot.plugins.latte.extensions.isSeparateChat
 import co.akoot.plugins.latte.extensions.latteWorld
 import co.akoot.plugins.latte.extensions.loadData
 import co.akoot.plugins.latte.extensions.rootWorld
 import co.akoot.plugins.latte.extensions.saveData
 import co.akoot.plugins.latte.extensions.statsAllowed
 import com.destroystokyo.paper.event.player.PlayerAdvancementCriterionGrantEvent
+import io.papermc.paper.event.player.AsyncChatEvent
 import org.bukkit.Location
 import org.bukkit.World
 import org.bukkit.entity.Player
@@ -20,6 +22,7 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityTeleportEvent
+import org.bukkit.event.player.AsyncPlayerChatEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerPortalEvent
 import org.bukkit.event.player.PlayerQuitEvent
@@ -82,7 +85,7 @@ class MultiWorldListener(private val latte: Latte) : Listener {
         if (event.cause in setOf(
                 PlayerTeleportEvent.TeleportCause.EXIT_BED,
                 PlayerTeleportEvent.TeleportCause.DISMOUNT,
-                PlayerTeleportEvent.TeleportCause.CHORUS_FRUIT,
+                PlayerTeleportEvent.TeleportCause.CONSUMABLE_EFFECT,
                 PlayerTeleportEvent.TeleportCause.END_GATEWAY
             )
         ) return
