@@ -78,5 +78,9 @@ fun Player.rtp(world: World = this.world, radiusX: Double? = null, radiusZ: Doub
 }
 
 var Player.globalChatEnabled
-    get() = config.getBoolean("flags.globalChat") ?: false
+    get() = config.getBoolean("flags.globalChat") ?: true
     set(value) = config.set("flags.globalChat", value)
+
+var Player.rtpCooldown
+    get() = getMeta<Long>("rtp.cooldown") ?: 0
+    set(value) = setMeta("rtp.cooldown", value)
