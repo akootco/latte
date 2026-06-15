@@ -14,6 +14,7 @@ import co.akoot.plugins.bluefox.extensions.removeFromPDCList
 import co.akoot.plugins.bluefox.extensions.setPDC
 import co.akoot.plugins.bluefox.util.Text
 import co.akoot.plugins.bluefox.util.Text.Companion.copy
+import co.akoot.plugins.latte.commands.BoomZoneCommand
 import co.akoot.plugins.latte.commands.GlobalCommand
 import co.akoot.plugins.latte.commands.LatteCommand
 import co.akoot.plugins.latte.commands.MobZoneCommand
@@ -98,6 +99,7 @@ class Latte : FoxPlugin("latte") {
         registerCommand(LatteCommand(this))
         registerCommand(ServerSafeZoneCommand(this))
         registerCommand(SafeZoneCommand(this))
+        registerCommand(BoomZoneCommand(this))
         registerCommand(MobZoneCommand(this))
         registerCommand(RtpCommand(this))
         registerCommand(GlobalCommand(this))
@@ -128,6 +130,7 @@ class Latte : FoxPlugin("latte") {
             loadZone(world, "server_safe_zone")
             loadZone(world, "safe_zone")
             loadZone(world, "mob_zone")
+            loadZone(world, "boom_zone")
         }
     }
 

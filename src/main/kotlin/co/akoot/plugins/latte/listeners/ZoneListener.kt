@@ -31,6 +31,7 @@ class ZoneListener(val plugin: Latte) : Listener {
     @EventHandler
     fun onExplosion(event: EntityExplodeEvent) {
         val location = event.entity.location
+        if(Latte.isInZone("boom_zone", location)) return
         if (Latte.isInZone("safe_zone", location) || Latte.isInZone("server_safe_zone", location)) event.blockList()
             .clear()
     }
