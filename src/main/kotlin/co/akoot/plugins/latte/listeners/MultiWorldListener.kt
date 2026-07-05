@@ -3,18 +3,7 @@ package co.akoot.plugins.latte.listeners
 import co.akoot.plugins.bluefox.util.async
 import co.akoot.plugins.bluefox.util.sync
 import co.akoot.plugins.latte.Latte
-import co.akoot.plugins.latte.extensions.advancementsAllowed
-import co.akoot.plugins.latte.extensions.applySettings
-import co.akoot.plugins.latte.extensions.getRelatedWorld
-import co.akoot.plugins.latte.extensions.isRelated
-import co.akoot.plugins.latte.extensions.isSeparateChat
-import co.akoot.plugins.latte.extensions.latteWorld
-import co.akoot.plugins.latte.extensions.loadData
-import co.akoot.plugins.latte.extensions.rootWorld
-import co.akoot.plugins.latte.extensions.saveData
-import co.akoot.plugins.latte.extensions.statsAllowed
-import com.destroystokyo.paper.event.player.PlayerAdvancementCriterionGrantEvent
-import io.papermc.paper.event.player.AsyncChatEvent
+import co.akoot.plugins.latte.extensions.*
 import org.bukkit.Location
 import org.bukkit.World
 import org.bukkit.entity.Player
@@ -22,13 +11,7 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityTeleportEvent
-import org.bukkit.event.player.AsyncPlayerChatEvent
-import org.bukkit.event.player.PlayerJoinEvent
-import org.bukkit.event.player.PlayerPortalEvent
-import org.bukkit.event.player.PlayerQuitEvent
-import org.bukkit.event.player.PlayerRespawnEvent
-import org.bukkit.event.player.PlayerStatisticIncrementEvent
-import org.bukkit.event.player.PlayerTeleportEvent
+import org.bukkit.event.player.*
 
 class MultiWorldListener(private val latte: Latte) : Listener {
 

@@ -6,14 +6,7 @@ import co.akoot.plugins.bluefox.extensions.setMeta
 import co.akoot.plugins.bluefox.extensions.text
 import co.akoot.plugins.bluefox.util.Text
 import co.akoot.plugins.latte.Latte
-import co.akoot.plugins.latte.extensions.advancementsAllowed
-import co.akoot.plugins.latte.extensions.globalChatEnabled
-import co.akoot.plugins.latte.extensions.isAnarchy
-import co.akoot.plugins.latte.extensions.isRelated
-import co.akoot.plugins.latte.extensions.isSeparateChat
-import co.akoot.plugins.latte.extensions.randomSafeLocation
-import co.akoot.plugins.latte.extensions.rootWorld
-import co.akoot.plugins.latte.extensions.statsAllowed
+import co.akoot.plugins.latte.extensions.*
 import com.destroystokyo.paper.event.player.PlayerAdvancementCriterionGrantEvent
 import org.bukkit.Location
 import org.bukkit.entity.Player
@@ -58,8 +51,8 @@ class LatteListener(plugin: Latte) : Listener {
     @EventHandler
     fun onPlayerRespawn(event: PlayerRespawnEvent) {
         val world = event.respawnLocation.world
-        if(!world.isAnarchy) return
-        if(!event.isMissingRespawnBlock) return
+        if (!world.isAnarchy) return
+        if (!event.isMissingRespawnBlock) return
         event.respawnLocation = world.randomSafeLocation()
     }
 

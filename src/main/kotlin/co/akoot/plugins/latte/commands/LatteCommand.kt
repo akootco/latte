@@ -5,7 +5,6 @@ import co.akoot.plugins.bluefox.api.Kolor
 import co.akoot.plugins.bluefox.api.XYZ
 import co.akoot.plugins.bluefox.extensions.sendMessage
 import co.akoot.plugins.bluefox.util.Text
-import co.akoot.plugins.bluefox.util.Text.Companion.invoke
 import co.akoot.plugins.latte.Latte
 import co.akoot.plugins.latte.extensions.WorldKeys
 import org.bukkit.GameMode
@@ -13,7 +12,6 @@ import org.bukkit.World
 import org.bukkit.World.Environment
 import org.bukkit.WorldType
 import org.bukkit.command.CommandSender
-import org.bukkit.entity.Player
 import kotlin.random.Random
 
 //TODO this can probably be simplified
@@ -29,7 +27,18 @@ class LatteCommand(private val latte: Latte) :
             id -> when (args.size) {
                 1 -> {
                     val suggestions =
-                        mutableListOf("load", "unload", "list", "tp", "tpp", "delete", "config", "create", "reload", "info")
+                        mutableListOf(
+                            "load",
+                            "unload",
+                            "list",
+                            "tp",
+                            "tpp",
+                            "delete",
+                            "config",
+                            "create",
+                            "reload",
+                            "info"
+                        )
                     val arg = args[0]
                     if (arg.startsWith("delete") || arg.startsWith("load")) {
                         suggestions += "$arg-all"
@@ -55,10 +64,12 @@ class LatteCommand(private val latte: Latte) :
                             if (player != null) latte.getWorldFolders().filterValues { !it }.keys.toMutableList()
                             else mutableListOf()
                         }
+
                         "config" -> {
-                            if(!latte.getWorldFolders().containsKey(args[1])) return mutableListOf()
+                            if (!latte.getWorldFolders().containsKey(args[1])) return mutableListOf()
                             mutableListOf("set")
                         }
+
                         "create" -> GameMode.entries.map { it.name.lowercase() }.toMutableList()
                         else -> mutableListOf()
                     }
@@ -82,6 +93,7 @@ class LatteCommand(private val latte: Latte) :
                                 else -> mutableListOf()
                             }
                         }
+
                         "create" -> WorldType.entries.map { it.name.lowercase() }.toMutableList()
                         else -> mutableListOf()
                     }
@@ -103,6 +115,7 @@ class LatteCommand(private val latte: Latte) :
                     }
                 }
             }
+
             else -> mutableListOf()
         }
     }
@@ -123,20 +136,25 @@ class LatteCommand(private val latte: Latte) :
                     "info" -> {
                         val player = getPlayerSender(sender).value ?: return false
                         var message = Kolor.TEXT("You are in ") + Kolor.ACCENT(player.world.name) + "."
-                        val map = WorldKeys.from(player.world).map { (key, value) -> Kolor.ACCENT(key) + Kolor.TEXT(" = ") + Kolor.ALT(value.toString()) }
-                        for(entry in map) {
+                        val map = WorldKeys.from(player.world)
+                            .map { (key, value) -> Kolor.ACCENT(key) + Kolor.TEXT(" = ") + Kolor.ALT(value.toString()) }
+                        for (entry in map) {
                             message = message + Text.newline + entry
                         }
                         sender.sendMessage(message)
                         return true
                     }
-                    "load" -> latte.load(args[1], args.getOrNull(2)?.let { Environment.valueOf(it.uppercase()) }).send(sender).value
+
+                    "load" -> latte.load(args[1], args.getOrNull(2)?.let { Environment.valueOf(it.uppercase()) })
+                        .send(sender).value
+
                     "unload" -> latte.unload(args[1]).send(sender).value
                     "list" -> latte.list().send(sender).value
                     "reload" -> {
                         latte.settings.reload()
                         return Result.success("Reloaded config!").send(sender).value
                     }
+
                     "tp" -> {
                         val player = getPlayerSender(sender).send(sender).value ?: return false
                         val worldName = args[1]
@@ -185,7 +203,7 @@ class LatteCommand(private val latte: Latte) :
                         val config =
                             latte.getWorldConfig(worldName) ?: return Result.fail("No config file found!").value
                         val key = args[3]
-                        when(args[2]) {
+                        when (args[2]) {
                             "set" -> {
                                 if (args.size < 5) return sendUsage(sender)
                                 val desiredValue = args[4]
@@ -204,6 +222,7 @@ class LatteCommand(private val latte: Latte) :
                                             Kolor.ACCENT(worldName)
                                 ).send(sender).value
                             }
+
                             else -> sendUsage(sender)
                         }
 
@@ -223,6 +242,7 @@ class LatteCommand(private val latte: Latte) :
                     else -> sendUsage(sender)
                 }
             }
+
             else -> sendUsage(sender)
         }
     }

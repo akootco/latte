@@ -1,9 +1,7 @@
 package co.akoot.plugins.latte.extensions
 
 import co.akoot.plugins.bluefox.api.FoxConfig
-import co.akoot.plugins.bluefox.extensions.getPDC
 import co.akoot.plugins.bluefox.extensions.mkdirp
-import co.akoot.plugins.latte.Latte
 import co.akoot.plugins.latte.extensions.WorldKeys.ALLOW_ADVANCEMENTS
 import co.akoot.plugins.latte.extensions.WorldKeys.ALLOW_FLIGHT
 import co.akoot.plugins.latte.extensions.WorldKeys.ALLOW_STATS
@@ -13,10 +11,8 @@ import co.akoot.plugins.latte.extensions.WorldKeys.PARENT_WORLD
 import co.akoot.plugins.latte.extensions.WorldKeys.SEPARATE_CHAT
 import org.bukkit.*
 import org.bukkit.World.Environment
-import org.bukkit.entity.Entity
 import java.io.File
 import kotlin.random.Random
-import kotlin.unaryMinus
 
 
 object WorldKeys {
@@ -39,10 +35,10 @@ object WorldKeys {
 
     fun from(world: World): Map<String, Any> {
         val map = mutableMapOf<String, Any>()
-        for(key in booleans) {
+        for (key in booleans) {
             map += key to (world.config.getBoolean(key) ?: false)
         }
-        for(key in enums + strings) {
+        for (key in enums + strings) {
             map += key to (world.config.getString(key) ?: "DEFAULT")
         }
         return map
@@ -52,7 +48,8 @@ object WorldKeys {
 val World.config: FoxConfig get() = FoxConfig(worldFolder.resolve("latte.conf"))
 val World.parentWorld: World? get() = config.getString(PARENT_WORLD)?.let { Bukkit.getWorld(it) }
 val World.rootWorld: World get() = parentWorld ?: getRelatedWorld(Environment.NORMAL) ?: this
-val World.gameMode: GameMode get() = config.getString(GAME_MODE)?.let { GameMode.valueOf(it.uppercase()) } ?: GameMode.SURVIVAL
+val World.gameMode: GameMode
+    get() = config.getString(GAME_MODE)?.let { GameMode.valueOf(it.uppercase()) } ?: GameMode.SURVIVAL
 val World.flyMode: Boolean get() = config.getBoolean(ALLOW_FLIGHT) ?: false
 val World.statsAllowed: Boolean get() = config.getBoolean(ALLOW_STATS) ?: true
 val World.advancementsAllowed: Boolean get() = config.getBoolean(ALLOW_ADVANCEMENTS) ?: true
@@ -118,7 +115,11 @@ fun World.getDataFile(offlinePlayer: OfflinePlayer): File {
         .resolve("${offlinePlayer.uniqueId}.dat")
 }
 
-fun World.randomSafeLocation(radiusX: Double = this.worldBorder.size, radiusZ: Double = radiusX, radiusY: Double = this.maxHeight.toDouble()): Location {
+fun World.randomSafeLocation(
+    radiusX: Double = this.worldBorder.size,
+    radiusZ: Double = radiusX,
+    radiusY: Double = this.maxHeight.toDouble()
+): Location {
     val randomLocation = Location(
         this,
         Random.nextDouble(-radiusX, radiusX),

@@ -1,27 +1,15 @@
 package co.akoot.plugins.latte
 
 import co.akoot.plugins.bluefox.BlueFox
-import co.akoot.plugins.bluefox.api.Area
+import co.akoot.plugins.bluefox.api.*
 import co.akoot.plugins.bluefox.api.FoxCommand.Result
-import co.akoot.plugins.bluefox.api.FoxConfig
-import co.akoot.plugins.bluefox.api.FoxPlugin
-import co.akoot.plugins.bluefox.api.Kolor
-import co.akoot.plugins.bluefox.api.XYZ
-import co.akoot.plugins.bluefox.extensions.addToPDCList
-import co.akoot.plugins.bluefox.extensions.getPDCList
-import co.akoot.plugins.bluefox.extensions.invoke
-import co.akoot.plugins.bluefox.extensions.removeFromPDCList
-import co.akoot.plugins.bluefox.extensions.setPDC
+import co.akoot.plugins.bluefox.extensions.*
 import co.akoot.plugins.bluefox.util.Text
 import co.akoot.plugins.bluefox.util.Text.Companion.copy
-import co.akoot.plugins.latte.commands.BoomZoneCommand
-import co.akoot.plugins.latte.commands.GlobalCommand
-import co.akoot.plugins.latte.commands.LatteCommand
-import co.akoot.plugins.latte.commands.MobZoneCommand
-import co.akoot.plugins.latte.commands.RtpCommand
-import co.akoot.plugins.latte.commands.SafeZoneCommand
-import co.akoot.plugins.latte.commands.ServerSafeZoneCommand
-import co.akoot.plugins.latte.extensions.*
+import co.akoot.plugins.latte.commands.*
+import co.akoot.plugins.latte.extensions.WorldKeys
+import co.akoot.plugins.latte.extensions.config
+import co.akoot.plugins.latte.extensions.saveData
 import co.akoot.plugins.latte.listeners.LatteListener
 import co.akoot.plugins.latte.listeners.MultiWorldListener
 import co.akoot.plugins.latte.listeners.ZoneListener
@@ -58,7 +46,7 @@ class Latte : FoxPlugin("latte") {
 
         fun addZone(zoneName: String, area: Area): Boolean {
             val s1 = zones.getOrPut(zoneName) { mutableSetOf() }.add(area) //zones[zoneName]?.add(area) ?: return false
-            val s2 =  area.world.addToPDCList(key("zones.$zoneName"), area.serialize())
+            val s2 = area.world.addToPDCList(key("zones.$zoneName"), area.serialize())
             return s1 && s2
         }
 
@@ -106,7 +94,7 @@ class Latte : FoxPlugin("latte") {
     }
 
     override fun registerEvents() {
-        if(settings.getBoolean("world_management") == true) {
+        if (settings.getBoolean("world_management") == true) {
             registerEventListener(MultiWorldListener(this))
         }
         registerEventListener(LatteListener(this))
@@ -159,7 +147,8 @@ class Latte : FoxPlugin("latte") {
     }
 
     fun delete(name: String): Result<Boolean> {
-        val world = server.getWorld(name) ?: return Result.fail(Kolor.ERROR("World ") + Kolor.ERROR.accent(name) + Kolor.ERROR(" does not exist!"))
+        val world = server.getWorld(name)
+            ?: return Result.fail(Kolor.ERROR("World ") + Kolor.ERROR.accent(name) + Kolor.ERROR(" does not exist!"))
         server.unloadWorld(world, false)
         world.config.file.delete()
         world.worldFolder.deleteRecursively()
@@ -167,13 +156,15 @@ class Latte : FoxPlugin("latte") {
     }
 
     fun load(name: String, environment: Environment? = null): Result<Boolean> {
-        server.getWorld(name)?.let { return Result.fail(Kolor.ERROR("World ") + Kolor.ERROR.accent(it.name) + Kolor.ERROR(" already loaded!")) }
+        server.getWorld(name)
+            ?.let { return Result.fail(Kolor.ERROR("World ") + Kolor.ERROR.accent(it.name) + Kolor.ERROR(" already loaded!")) }
         val worldCreator = WorldCreator(name)
         val config = getWorldConfig(name)
         val env = environment ?: config?.getString("environment")?.let { Environment.valueOf(it) } ?: Environment.NORMAL
         worldCreator.environment(env)
         val world =
-            worldCreator.createWorld() ?: return Result.fail(Kolor.ERROR("World ") + Kolor.ERROR.accent(name) + Kolor.ERROR(" failed to load!"))
+            worldCreator.createWorld()
+                ?: return Result.fail(Kolor.ERROR("World ") + Kolor.ERROR.accent(name) + Kolor.ERROR(" failed to load!"))
         config?.apply {
             set("environment", world.environment.name)
         }
@@ -181,7 +172,8 @@ class Latte : FoxPlugin("latte") {
     }
 
     fun unload(name: String): Result<Boolean> {
-        val world = server.getWorld(name) ?: return Result.fail(Kolor.ERROR("World ") + Kolor.ERROR.accent(name) + Kolor.ERROR(" could not be unloaded!"))
+        val world = server.getWorld(name)
+            ?: return Result.fail(Kolor.ERROR("World ") + Kolor.ERROR.accent(name) + Kolor.ERROR(" could not be unloaded!"))
         for (player in world.players) {
             player.teleport(player.respawnLocation ?: BlueFox.spawnLocation)
         }
@@ -193,7 +185,8 @@ class Latte : FoxPlugin("latte") {
     }
 
     fun teleport(player: Player, name: String, pos: XYZ? = null): Result<Boolean> {
-        val world = server.getWorld(name) ?: return Result.fail(Kolor.ERROR("World ") + Kolor.ERROR.accent(name) + Kolor.ERROR(" is not loaded!"))
+        val world = server.getWorld(name)
+            ?: return Result.fail(Kolor.ERROR("World ") + Kolor.ERROR.accent(name) + Kolor.ERROR(" is not loaded!"))
         var location = world.spawnLocation
         if (pos != null) {
             location = Location(world, pos.x, pos.y, pos.z)
@@ -237,13 +230,14 @@ class Latte : FoxPlugin("latte") {
             (Kolor.TEXT("Created world ") +
                     Kolor.ACCENT(world.name) +
                     Kolor.TEXT(" (") +
-                    Kolor.ACCENT((gameMode ?: GameMode.SURVIVAL).name.lowercase() +
-                    Kolor.TEXT("/") +
-                    Kolor.ALT((environment ?: Environment.NORMAL).name.lowercase()) +
-                    Kolor.TEXT("/") +
-                    Kolor.ACCENT((type ?: WorldType.NORMAL).name.lowercase()) +
-                    Kolor.TEXT(") with seed ") +
-                    (seed ?: creator.seed()).copy()
+                    Kolor.ACCENT(
+                        (gameMode ?: GameMode.SURVIVAL).name.lowercase() +
+                                Kolor.TEXT("/") +
+                                Kolor.ALT((environment ?: Environment.NORMAL).name.lowercase()) +
+                                Kolor.TEXT("/") +
+                                Kolor.ACCENT((type ?: WorldType.NORMAL).name.lowercase()) +
+                                Kolor.TEXT(") with seed ") +
+                                (seed ?: creator.seed()).copy()
                     )).component
         )
     }

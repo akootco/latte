@@ -2,7 +2,10 @@ package co.akoot.plugins.latte.extensions
 
 import co.akoot.plugins.bluefox.extensions.*
 import co.akoot.plugins.latte.Latte
-import org.bukkit.*
+import org.bukkit.GameMode
+import org.bukkit.Location
+import org.bukkit.OfflinePlayer
+import org.bukkit.World
 import org.bukkit.entity.Player
 import java.io.File
 
@@ -13,9 +16,13 @@ private const val LATTE_WORLD = "world"
  * @param world The world to apply settings from
  */
 fun Player.applySettings(world: World) {
-    if(hasPermission(Latte.Permission.GAMEMODE_BYPASS) && gameMode in setOf(GameMode.CREATIVE, GameMode.SPECTATOR)) return
+    if (hasPermission(Latte.Permission.GAMEMODE_BYPASS) && gameMode in setOf(
+            GameMode.CREATIVE,
+            GameMode.SPECTATOR
+        )
+    ) return
     gameMode = world.rootWorld.gameMode
-    if(world.rootWorld.flyMode) allowFlight = true
+    if (world.rootWorld.flyMode) allowFlight = true
 }
 
 /**
@@ -34,7 +41,7 @@ fun OfflinePlayer.getDataFile(world: World): File {
 fun Player.loadData(world: World) {
     val rootWorld = world.rootWorld
     val dataFile = getDataFile(rootWorld)
-    if(!dataFile.exists()) createDataFile(rootWorld)
+    if (!dataFile.exists()) createDataFile(rootWorld)
     val pdc = persistentDataContainer.serializeToBytes()
     dataFile.copyTo(getDataFile(), true)
     persistentDataContainer.readFromBytes(pdc)
@@ -69,9 +76,15 @@ fun Player.createDataFile(world: World) {
     saveData(world)
 }
 
-fun Player.rtp(world: World = this.world, radiusX: Double? = null, radiusZ: Double? = radiusX, radiusY: Double? = null): Location {
+fun Player.rtp(
+    world: World = this.world,
+    radiusX: Double? = null,
+    radiusZ: Double? = radiusX,
+    radiusY: Double? = null
+): Location {
     val maxRadius = world.worldBorder.size / 2
-    val safeLocation = world.randomSafeLocation(radiusX ?: maxRadius, radiusZ ?: maxRadius, radiusY ?: world.maxHeight.toDouble())
+    val safeLocation =
+        world.randomSafeLocation(radiusX ?: maxRadius, radiusZ ?: maxRadius, radiusY ?: world.maxHeight.toDouble())
     val randomLocation = safeLocation.facing(yaw, pitch)
     teleport(randomLocation)
     return randomLocation

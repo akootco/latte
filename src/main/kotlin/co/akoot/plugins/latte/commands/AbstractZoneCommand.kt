@@ -24,7 +24,9 @@ abstract class AbstractZoneCommand(
     override fun onTabComplete(sender: CommandSender, alias: String, args: Array<out String>): MutableList<String> {
         return when {
             args.size == 1 -> mutableListOf("cubic", "remove")
-            args.size == 2 && args[0] == "remove" -> Latte.zones[zoneName]?.map { it.toString() }?.toMutableList() ?: nothing
+            args.size == 2 && args[0] == "remove" -> Latte.zones[zoneName]?.map { it.toString() }?.toMutableList()
+                ?: nothing
+
             else -> nothing
         }
     }

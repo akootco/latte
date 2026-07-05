@@ -5,12 +5,10 @@ import co.akoot.plugins.bluefox.api.Kolor
 import co.akoot.plugins.bluefox.extensions.sendMessage
 import co.akoot.plugins.latte.Latte
 import co.akoot.plugins.latte.extensions.globalChatEnabled
-import com.mojang.brigadier.context.CommandContext
-import io.papermc.paper.command.brigadier.CommandSourceStack
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
-class GlobalCommand(plugin: Latte): CatCommand(plugin, "global") {
+class GlobalCommand(plugin: Latte) : CatCommand(plugin, "global") {
 
     init {
         noargs {
@@ -42,10 +40,18 @@ class GlobalCommand(plugin: Latte): CatCommand(plugin, "global") {
     }
 
     fun setGlobalChat(sender: CommandSender, target: Player, enable: Boolean): Boolean {
-        if(target.globalChatEnabled != enable) target.globalChatEnabled = enable
-        target.sendMessage(Kolor.TEXT("Global chat ") + Kolor.ACCENT(if(enable) "enabled" else "disabled") + Kolor.TEXT("."))
-        if(sender == target) return true
-        sender.sendMessage(Kolor.TEXT("Global chat ") + Kolor.ACCENT(if(enable) "enabled" else "disabled") + Kolor.TEXT(" for ") + target.displayName().color(Kolor.PLAYER.get()))
+        if (target.globalChatEnabled != enable) target.globalChatEnabled = enable
+        target.sendMessage(
+            Kolor.TEXT("Global chat ") + Kolor.ACCENT(if (enable) "enabled" else "disabled") + Kolor.TEXT(
+                "."
+            )
+        )
+        if (sender == target) return true
+        sender.sendMessage(
+            Kolor.TEXT("Global chat ") + Kolor.ACCENT(if (enable) "enabled" else "disabled") + Kolor.TEXT(
+                " for "
+            ) + target.displayName().color(Kolor.PLAYER.get())
+        )
         return true
     }
 }
