@@ -120,11 +120,12 @@ fun World.randomSafeLocation(
     radiusZ: Double = radiusX,
     radiusY: Double = this.maxHeight.toDouble()
 ): Location {
+    val border = worldBorder.size
     val randomLocation = Location(
         this,
-        Random.nextDouble(-radiusX, radiusX),
-        Random.nextDouble(this.minHeight.toDouble(), radiusY),
-        Random.nextDouble(-radiusZ, radiusZ)
+        Random.nextDouble(-radiusX, radiusX).coerceIn(-border, border),
+        Random.nextDouble(this.minHeight.toDouble(), radiusY).coerceAtMost(maxHeight.toDouble()),
+        Random.nextDouble(-radiusZ, radiusZ).coerceIn(-border, border)
     )
 
     return randomLocation.lowestSafeLocation

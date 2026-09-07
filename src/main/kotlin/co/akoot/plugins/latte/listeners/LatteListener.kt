@@ -16,10 +16,26 @@ import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.player.AsyncPlayerChatEvent
 import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerRespawnEvent
 import org.bukkit.event.player.PlayerStatisticIncrementEvent
 
-class LatteListener(plugin: Latte) : Listener {
+class LatteListener(val plugin: Latte) : Listener {
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    fun onJoin(event: PlayerJoinEvent) {
+        if(plugin.settings.getBoolean("randomSpawn.enabled") != true) return
+        val radius = plugin.settings.getLong("randomSpawn.radius")
+        val player = event.player
+        val world = player.world
+        if(player.hasPlayedBefore()) return
+        val randomSpawn = if(radius == null) {
+            world.randomSafeLocation()
+        } else {
+            world.randomSafeLocation(radius.toDouble())
+        }
+        player.teleport(randomSpawn)
+    }
 
     //todo: per-world chat?
     @EventHandler(priority = EventPriority.HIGHEST)
