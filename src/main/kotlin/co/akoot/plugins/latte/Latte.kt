@@ -91,6 +91,7 @@ class Latte : FoxPlugin("latte") {
         registerCommand(MobZoneCommand(this))
         registerCommand(RtpCommand(this))
         registerCommand(GlobalCommand(this))
+        registerCommand(OptimizeCommand)
     }
 
     override fun registerEvents() {
@@ -99,6 +100,7 @@ class Latte : FoxPlugin("latte") {
         }
         registerEventListener(LatteListener(this))
         registerEventListener(ZoneListener(this))
+        registerEventListener(OptimizeCommand)
     }
 
     private fun loadWorlds() {
