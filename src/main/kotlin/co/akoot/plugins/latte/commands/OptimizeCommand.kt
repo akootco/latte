@@ -96,7 +96,7 @@ object OptimizeCommand: CatCommand(Latte.instance, "optimize", "Optimize the wor
         if (action != PlayerItemFrameChangeEvent.ItemFrameChangeAction.REMOVE) return
         val shears = player.inventory.itemInMainHand.takeIf { it.type == Material.SHEARS } ?: return
         val scale = shears.effectiveName().asString().toFloatOrNull()?.coerceIn(-2f, 2f)
-        itemFrame.toItemDisplay(scale ?: 1f)
+        itemFrame.toItemDisplay(scale ?: 1f, if(player.isSneaking) -1f else 1f)
         isCancelled = true
     }
 }
