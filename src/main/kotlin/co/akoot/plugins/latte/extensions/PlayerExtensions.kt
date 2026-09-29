@@ -53,7 +53,7 @@ fun Player.loadData(world: World) {
  */
 fun Player.saveData(world: World) {
     saveData()
-    getDataFile().copyTo(getDataFile(world.rootWorld), true)
+    runCatching { getDataFile().copyTo(getDataFile(world.rootWorld), true) }
     setPDC(Latte.key(LATTE_WORLD), world.name)
 }
 
