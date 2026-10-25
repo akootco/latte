@@ -1,40 +1,31 @@
 package co.akoot.plugins.latte.commands
 
 import co.akoot.plugins.bluefox.api.CatCommand
-import co.akoot.plugins.bluefox.extensions.getMeta
-import co.akoot.plugins.bluefox.extensions.getPDC
-import co.akoot.plugins.bluefox.extensions.setMeta
 import co.akoot.plugins.bluefox.util.Color
 import co.akoot.plugins.bluefox.util.Text.Companion.asString
-import co.akoot.plugins.bluefox.util.primary
-import co.akoot.plugins.bluefox.util.secondary
 import co.akoot.plugins.bluefox.util.sendText
 import co.akoot.plugins.bluefox.util.sendWarning
 import co.akoot.plugins.latte.Latte
-import co.akoot.plugins.latte.Latte.Companion.key
 import co.akoot.plugins.latte.util.toItemDisplay
 import co.akoot.plugins.latte.util.toItemFrame
 import io.papermc.paper.event.player.PlayerItemFrameChangeEvent
 import org.bukkit.Material
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Interaction
-import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.ItemFrame
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerInteractEntityEvent
-import org.bukkit.inventory.ItemStack
-import java.util.UUID
 
 private enum class Mode(val id: String) {
     ITEM_FRAME("itemFrame")
 }
 
-object OptimizeCommand: CatCommand(Latte.instance, "optimize", "Optimize the world!", onCommand = {
+object OptimizeCommand : CatCommand(Latte.instance, "optimize", "Optimize the world!", onCommand = {
 
     fun Player.optimize(frame: ItemFrame, scale: Float = 1f): Boolean {
-        if(frame.item.type == Material.AIR) return false
+        if (frame.item.type == Material.AIR) return false
         frame.toItemDisplay(scale)
         return sendText("Optimized this ", frame.item.effectiveName().color(Color.Primary), "!")
     }
@@ -53,11 +44,13 @@ object OptimizeCommand: CatCommand(Latte.instance, "optimize", "Optimize the wor
                         val frame = entity as ItemFrame
                         optimize(frame, scale)
                     }
+
                     EntityType.INTERACTION -> {
                         val interaction = entity as Interaction
                         unOptimize(interaction)
 
                     }
+
                     else -> {
                         return sendWarning("Look at an item frame!")
                     }
@@ -83,7 +76,7 @@ object OptimizeCommand: CatCommand(Latte.instance, "optimize", "Optimize the wor
     @EventHandler
     fun PlayerInteractEntityEvent.onInteract() {
         if (isCancelled) return
-        if(rightClicked.type != EntityType.INTERACTION) return
+        if (rightClicked.type != EntityType.INTERACTION) return
         player.inventory.itemInMainHand.takeIf { it.type == Material.SHEARS } ?: return
 
         val interaction = rightClicked as? Interaction ?: return
@@ -96,7 +89,7 @@ object OptimizeCommand: CatCommand(Latte.instance, "optimize", "Optimize the wor
         if (action != PlayerItemFrameChangeEvent.ItemFrameChangeAction.REMOVE) return
         val shears = player.inventory.itemInMainHand.takeIf { it.type == Material.SHEARS } ?: return
         val scale = shears.effectiveName().asString().toFloatOrNull()?.coerceIn(-2f, 2f)
-        itemFrame.toItemDisplay(scale ?: 1f, if(player.isSneaking) -1f else 1f)
+        itemFrame.toItemDisplay(scale ?: 1f, if (player.isSneaking) -1f else 1f)
         isCancelled = true
     }
 }

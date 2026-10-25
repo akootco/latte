@@ -5,21 +5,20 @@ import co.akoot.plugins.bluefox.extensions.setPDC
 import co.akoot.plugins.latte.Latte.Companion.key
 import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Tag
-import org.bukkit.entity.Display
-import org.bukkit.entity.Interaction
-import org.bukkit.entity.ItemDisplay
-import org.bukkit.entity.ItemFrame
-import org.bukkit.entity.TextDisplay
+import org.bukkit.entity.*
 import org.bukkit.util.Transformation
 import org.joml.Quaternionf
 import org.joml.Vector3f
-import java.util.UUID
+import java.util.*
 
 val Number.radians: Float get() = Math.toRadians(this.toDouble()).toFloat()
 
 fun ItemFrame.toItemDisplay(scale: Float = 1f, textY: Float = 1f): Interaction {
     val stack = item.clone()
-    val isSmall = stack.type.isBlock || Tag.SAPLINGS.isTagged(stack.type) || Tag.CANDLES.isTagged(stack.type) || Tag.GROWS_CROPS.isTagged(stack.type)
+    val isSmall =
+        stack.type.isBlock || Tag.SAPLINGS.isTagged(stack.type) || Tag.CANDLES.isTagged(stack.type) || Tag.GROWS_CROPS.isTagged(
+            stack.type
+        )
     val displayScale = (if (isSmall) 0.25f else 0.51f) * scale
 
     val display = world.spawn(location, ItemDisplay::class.java) {
@@ -63,7 +62,7 @@ fun ItemFrame.toItemDisplay(scale: Float = 1f, textY: Float = 1f): Interaction {
         it.interactionHeight = 0.2f
         it.interactionWidth = 0.2f
         it.setPDC(key("display"), display.uniqueId)
-        if(isGlowing) it.setPDC(key("glowing"), isGlowing)
+        if (isGlowing) it.setPDC(key("glowing"), isGlowing)
         text?.let { textEntity ->
             it.setPDC(key("text"), textEntity.uniqueId)
         }
